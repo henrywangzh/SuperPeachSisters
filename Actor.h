@@ -18,7 +18,7 @@ public:
     }
     virtual void doSomething() = 0;
     virtual void bonk() {
-        cerr << "object bonked" << endl;
+        return;
     }
     StudentWorld* getWorld() {
         return m_world;
@@ -36,7 +36,6 @@ public:
         return false;
     }
     virtual void damage() {
-        cerr << "object damaged" << endl;
         return;
     }
 private:
@@ -220,7 +219,6 @@ public:
 class FriendlyProjectile : public Projectile {
 public:
     FriendlyProjectile(StudentWorld* studentWorld, int x, int y, int direction, int IID) : Projectile(studentWorld, x, y, direction, IID) {
-        cerr << "new enemy projectile made!" << endl;
     }
     void collision();
 };
@@ -229,7 +227,6 @@ public:
 class PeachFireball : public FriendlyProjectile {
 public:
     PeachFireball(StudentWorld* studentWorld, int x, int y, int direction) : FriendlyProjectile(studentWorld, x, y, direction, IID_PEACH_FIRE) {
-        cerr << "new peach fireball made!" << endl;
     }
 };
 
@@ -237,7 +234,6 @@ public:
 class Shell : public FriendlyProjectile {
 public:
     Shell(StudentWorld* studentWorld, int x, int y, int direction) : FriendlyProjectile(studentWorld, x, y, direction, IID_SHELL) {
-        cerr << "new shell made!" << endl;
     }
 };
 
@@ -245,7 +241,6 @@ public:
 class PiranhaFireball : public Projectile {
 public:
     PiranhaFireball(StudentWorld* studentWorld, int x, int y, int direction) : Projectile(studentWorld, x, y, direction, IID_PIRANHA_FIRE) {
-        cerr << "new piranha fireball made!" << endl;
     }
     void collision();
 };
@@ -280,7 +275,6 @@ public:
 class Star : public Goodie {
 public:
     Star(StudentWorld* studentWorld, int x, int y, int direction) : Goodie(studentWorld, x, y, direction, IID_STAR) {
-        cerr << "new star made!" << endl;
     }
     void customBuffs();
 };

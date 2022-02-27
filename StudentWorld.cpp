@@ -18,6 +18,7 @@ GameWorld* createStudentWorld(string assetPath)
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
+    //initialize values
     m_levelFinished = false;
     m_gameWon = false;
     m_actors.clear();
@@ -26,6 +27,7 @@ StudentWorld::StudentWorld(string assetPath)
 
 int StudentWorld::init()
 {
+    //level file name calculations
     m_levelFinished = false;
     Level lev(assetPath());
     int level = getLevel();
@@ -34,70 +36,59 @@ int StudentWorld::init()
     levelName << setw(2) << level;
     string level_file = "level" + levelName.str() + ".txt";
     
+    //check for errors
     Level::LoadResult result = lev.loadLevel(level_file);
     if (result == Level::load_fail_file_not_found) {
-        cerr << level_file << endl;
         return GWSTATUS_LEVEL_ERROR;
     }
     else if (result == Level::load_fail_bad_format) {
-        cerr << "level01.txt is improperly formatted" << endl;
         return GWSTATUS_LEVEL_ERROR;
     }
+    //load level
     else if (result == Level::load_success) {
-        cerr << "Successfully loaded level" << endl;
         Level::GridEntry ge;
         for(int x = 0; x < 32; ++x) {
             for(int y = 0; y < 32; ++y) {
                 ge = lev.getContentsOf(x, y);
+                //account for sprite width and height
                 int xCoord = x * SPRITE_WIDTH;
                 int yCoord = y * SPRITE_HEIGHT;
-            
+                
+                //load in each individual actor
                 switch (ge) {
                     case Level::empty:
-                     //   cout << "Location " << x << "," << y << " is empty" << endl;
                         break;
                     case Level::koopa:
-                     //   cout << "Location " << x << "," << y << " starts with a koopa" << endl;
                         m_actors.push_back(new Koopa(this, xCoord, yCoord));
                         break;
                     case Level::goomba:
-                     //   cout << "Location " << x << "," << y << " starts with a goomba" << endl;
                         m_actors.push_back(new Goomba(this, xCoord, yCoord));
                         break;
                     case Level::peach:
-                     //   cout << "Location " << x << "," << y << " is where Peach starts" << endl;
                         m_peach = new Peach(this, xCoord, yCoord);
                         break;
                     case Level::flag:
-                      //  cout << "Location " << x << "," << y << " is where a flag is" << endl;
                         m_actors.push_back(new Flag(this, xCoord, yCoord));
                         break;
                     case Level::block:
-                       // cout << "Location " << x << "," << y << " holds a regular block" << endl;
                         m_actors.push_back(new Block(this, xCoord, yCoord, 0));
                         break;
                     case Level::mushroom_goodie_block:
-                      //  cout << "Location " << x << "," << y << " has a mushroom goodie block" << endl;
                         m_actors.push_back(new Block(this, xCoord, yCoord, 1));
                         break;
                     case Level::flower_goodie_block:
-                       // cout << "Location " << x << "," << y << " has a flower goodie block" << endl;
                         m_actors.push_back(new Block(this, xCoord, yCoord, 2));
                         break;
                     case Level::star_goodie_block:
-                     //   cout << "Location " << x << "," << y << " has a star goodie block" << endl;
                         m_actors.push_back(new Block(this, xCoord, yCoord, 3));
                         break;
                     case Level::piranha:
-                      //  cout << "Location " << x << "," << y << " is where a piranha is" << endl;
                         m_actors.push_back(new Piranha(this, xCoord, yCoord));
                         break;
                     case Level::pipe:
-                       // cout << "Location " << x << "," << y << " is where a pipe is" << endl;
                         m_actors.push_back(new Pipe(this, xCoord, yCoord));
                         break;
                     case Level::mario:
-                      //  cout << "Location " << x << "," << y << " is where Mario is" << endl;
                         m_actors.push_back(new Mario(this, xCoord, yCoord));
                         break;
                 }
@@ -107,6 +98,7 @@ int StudentWorld::init()
     return GWSTATUS_CONTINUE_GAME;
 }
 
+//loop through all actors, move them, check for various conditions, delete dead actors, continue game
 int StudentWorld::move() {
     m_peach->doSomething();
     for (auto const& actor : m_actors) {
@@ -135,6 +127,7 @@ int StudentWorld::move() {
         }
         actor++;
     }
+    //display header text
     string text = "Lives: " + to_string(getLives()) + "  Level: " + to_string(getLevel()) + "  Points: " + to_string(getScore());
     if(m_peach->getStarPower()) {
         text += " StarPower!";
@@ -165,19 +158,24 @@ StudentWorld::~StudentWorld() {
     cleanUp();
 }
 
+//responsible for checking if a coordinate is blocked and for bonking actors and for damaging actors
+//caller parameter ensures an actor skips itself while looping through the list of all actors
 bool StudentWorld::coordIsBlocked(int x, int y, bool canBonk, bool canDamage, Actor* caller) {
     bool isBlocked = false;
     for (auto const& actor : m_actors) {
         if(actor == caller) {
             continue;
         }
+        //check to see if actor is still alive since it may have died earlier in the loop
         if(!actor->getIsAlive()) {
             continue;
         }
+        //main hitbox detection calculation
         if(x + SPRITE_WIDTH -1 >= actor->getX() && x <= actor->getX() + SPRITE_WIDTH - 1 && y + SPRITE_HEIGHT - 1 >= actor->getY() && y <= actor->getY() + SPRITE_HEIGHT -1 ) {
             if(actor->block()) {
                 isBlocked = true;
             }
+            //depending on input parameters, bonk/damage accordingly
             if(canBonk) {
                 actor->bonk();
             }
@@ -198,6 +196,7 @@ void StudentWorld::addActor(Actor* newActor) {
     m_actors.push_back(newActor);
 }
 
+//check for overlap with peach and also bonk peach if overlapping
 bool StudentWorld::overlappingPeach(int x, int y, bool canBonk) {
     if(x + SPRITE_WIDTH -1 >= m_peach->getX() && x <= m_peach->getX() + SPRITE_WIDTH - 1 && y + SPRITE_HEIGHT - 1 >= m_peach->getY() && y <= m_peach->getY() + SPRITE_HEIGHT -1 ) {
         if(canBonk) {
@@ -207,13 +206,13 @@ bool StudentWorld::overlappingPeach(int x, int y, bool canBonk) {
     }
     return false;
 }
+//setters and getters
 void StudentWorld::setLevelFinished() {
     m_levelFinished = true;
 }
 void StudentWorld::setGameWon() {
     m_gameWon = true;
 }
-
 void StudentWorld::giveFlowerBuff() {
     m_peach->setShootPower();
 }
