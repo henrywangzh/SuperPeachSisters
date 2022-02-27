@@ -4,6 +4,7 @@
 #include "Actor.h"
 #include <string>
 #include <list>
+#include <sstream>
 using namespace std;
 
 
@@ -28,19 +29,19 @@ int StudentWorld::init()
     m_levelFinished = false;
     Level lev(assetPath());
     int level = getLevel();
-    string level_file;
-    if(level >= 10) {
-        level_file = "level" + to_string(level) + ".txt";
-    } else {
-        level_file = "level0" + to_string(level) + ".txt";
-    }
+    ostringstream levelName;
+    levelName.fill('0');
+    levelName << setw(2) << level;
+    string level_file = "level" + levelName.str() + ".txt";
     
     Level::LoadResult result = lev.loadLevel(level_file);
     if (result == Level::load_fail_file_not_found) {
-        cerr << "Could not find level01.txt data file" << endl;
+        cerr << level_file << endl;
+        return GWSTATUS_LEVEL_ERROR;
     }
     else if (result == Level::load_fail_bad_format) {
         cerr << "level01.txt is improperly formatted" << endl;
+        return GWSTATUS_LEVEL_ERROR;
     }
     else if (result == Level::load_success) {
         cerr << "Successfully loaded level" << endl;
@@ -89,6 +90,7 @@ int StudentWorld::init()
                         break;
                     case Level::piranha:
                       //  cout << "Location " << x << "," << y << " is where a piranha is" << endl;
+                        m_actors.push_back(new Piranha(this, xCoord, yCoord));
                         break;
                     case Level::pipe:
                        // cout << "Location " << x << "," << y << " is where a pipe is" << endl;
@@ -169,6 +171,9 @@ bool StudentWorld::coordIsBlocked(int x, int y, bool canBonk, bool canDamage, Ac
         if(actor == caller) {
             continue;
         }
+        if(!actor->getIsAlive()) {
+            continue;
+        }
         if(x + SPRITE_WIDTH -1 >= actor->getX() && x <= actor->getX() + SPRITE_WIDTH - 1 && y + SPRITE_HEIGHT - 1 >= actor->getY() && y <= actor->getY() + SPRITE_HEIGHT -1 ) {
             if(actor->block()) {
                 isBlocked = true;
@@ -177,10 +182,12 @@ bool StudentWorld::coordIsBlocked(int x, int y, bool canBonk, bool canDamage, Ac
                 actor->bonk();
             }
             if(canDamage) {
-                actor->damage();
-                //need in order to achieve proper effect
-                isBlocked = true;
-                return isBlocked;
+                if(actor->isDamageable()) {
+                    actor->damage();
+                    //need in order to achieve proper effect
+                    isBlocked = true;
+                    return isBlocked;
+                }
             }
         }
     }
@@ -218,4 +225,13 @@ void StudentWorld::giveInvincibility(int frames) {
 }
 void StudentWorld::setPeachHP(int hp) {
     m_peach->setHP(hp);
+}
+bool StudentWorld::getPeachIsInvincible() const {
+    return m_peach->getStarPower();
+}
+int StudentWorld::getPeachX() {
+    return m_peach->getX();
+}
+int StudentWorld::getPeachY() {
+    return m_peach->getY();
 }

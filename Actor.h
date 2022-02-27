@@ -6,7 +6,10 @@
 #include <iostream>
 using namespace std;
 class StudentWorld;
+
 // Students:  Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp
+
+//base class for all actors
 class Actor: public GraphObject {
 public:
     Actor(StudentWorld* studentWorld, int x, int y, int imageID, int startDirection, int depth, int size): GraphObject(imageID, x, y , startDirection, depth, size), m_world(studentWorld),
@@ -41,7 +44,7 @@ private:
     bool isAlive;
 };
 
-
+// peach class, contains all member variables, setters, getters, etc.
 class Peach: public Actor {
 public:
     Peach(StudentWorld* studentWorld, int x, int y): Actor(studentWorld, x, y, IID_PEACH, 0, 0, 1) {
@@ -58,10 +61,6 @@ public:
     }
     void doSomething();
     void bonk();
-//    void doSomething() {
-//        std::cerr << "peach is doing nothing" << std::endl;
-//        return;
-//    }
     bool getStarPower() {
         return m_starPower;
     }
@@ -103,6 +102,7 @@ private:
     int m_hp;
 };
 
+//base class for all objects that can collide
 class Collider : public Actor {
 public:
     Collider(StudentWorld* studentWorld, int x, int y, int IID) : Actor(studentWorld, x, y, IID, 0, 2, 1) {
@@ -113,6 +113,8 @@ public:
         return true;
     }
 };
+
+//block class, also decides goodie info
 class Block: public Collider {
 public:
     Block(StudentWorld* studentWorld, int x, int y, int goodie): Collider(studentWorld, x, y, IID_BLOCK) {
@@ -128,6 +130,7 @@ private:
     int m_goodie;
 };
 
+//pipe class, does nothing aside from block movement
 class Pipe: public Collider {
 public:
     Pipe(StudentWorld* studentWorld, int x, int y): Collider(studentWorld, x, y, IID_PIPE) {
@@ -135,95 +138,119 @@ public:
     }
 };
 
-class Flag: public Actor {
+// base class for ending objectives (flag and mario)
+class Goal : public Actor {
 public:
-    Flag(StudentWorld* studentWorld, int x, int y): Actor(studentWorld, x, y, IID_FLAG, 0, 1, 1) {
-    }
-    void bonk() {
-        cerr << "flag bonked" << endl;
+    Goal(StudentWorld* studentWorld, int x, int y, int IID): Actor(studentWorld, x, y, IID, 0 , 1, 1) {
+        
     }
     void doSomething();
+    virtual void endAction() = 0;
+};
+//flag class
+class Flag: public Goal {
+public:
+    Flag(StudentWorld* studentWorld, int x, int y): Goal(studentWorld, x, y, IID_FLAG) {
+    }
+    void endAction();
 };
 
-class Mario: public Actor {
+//mario class
+class Mario: public Goal {
 public:
-    Mario(StudentWorld* studentWorld, int x, int y): Actor(studentWorld, x, y, IID_MARIO, 0, 1, 1) {
+    Mario(StudentWorld* studentWorld, int x, int y): Goal(studentWorld, x, y, IID_MARIO) {
     }
-    void bonk() {
-        cerr << "mario bonked" << endl;
-    }
-    void doSomething();
+    void endAction();
 };
+
+// base class for all enemies
 class Enemy : public Actor {
 public:
     Enemy(StudentWorld* studentWorld, int x, int y, int direction, int IID) : Actor(studentWorld, x, y, IID, direction, 0, 1) {
         
     }
+    bool isDamageable() {
+        return true;
+    }
+    virtual void doSomething();
+    void damage();
+    void bonk();
+    virtual void onHit() {}
 };
+
+//goomba class
 class Goomba: public Enemy {
 public:
     Goomba(StudentWorld* studentWorld, int x, int y) : Enemy(studentWorld, x, y, 180*randInt(0, 1), IID_GOOMBA) {
         
     }
-    void bonk();
-    void doSomething();
-    void damage() {
-        setIsAlive(false);
-    }
 };
+
+//koopa class
 class Koopa: public Enemy {
 public:
     Koopa(StudentWorld* studentWorld, int x, int y) : Enemy(studentWorld, x, y, 180*randInt(0, 1), IID_KOOPA) {
         
     }
-    void bonk();
-    void doSomething() {
-        if(!getIsAlive()) {
-            return;
-        }
-    }
-    void damage() {
-        setIsAlive(false);
-    }
+    void onHit();
 };
+
+//piranha class, overrides enemy doSomething()
+class Piranha : public Enemy {
+public:
+    Piranha(StudentWorld* studentWorld, int x, int y) : Enemy(studentWorld, x, y, 180*randInt(0, 1), IID_PIRANHA) {
+        m_firingDelay = 0;
+    }
+    void doSomething();
+private:
+    int m_firingDelay;
+};
+
+//projectile base class
 class Projectile : public Actor {
 public:
     Projectile(StudentWorld* studentWorld, int x, int y, int direction, int IID) : Actor(studentWorld, x, y, IID, direction, 1, 1) {
         
     }
+    void doSomething();
+    virtual void collision() = 0;
 };
-class PeachFireball : public Projectile {
+
+// base class for projectiles that don't damage peach and instead damage enemies
+class FriendlyProjectile : public Projectile {
 public:
-    PeachFireball(StudentWorld* studentWorld, int x, int y, int direction) : Projectile(studentWorld, x, y, direction, IID_PEACH_FIRE) {
+    FriendlyProjectile(StudentWorld* studentWorld, int x, int y, int direction, int IID) : Projectile(studentWorld, x, y, direction, IID) {
+        cerr << "new enemy projectile made!" << endl;
+    }
+    void collision();
+};
+
+//class for fireballs made by peach
+class PeachFireball : public FriendlyProjectile {
+public:
+    PeachFireball(StudentWorld* studentWorld, int x, int y, int direction) : FriendlyProjectile(studentWorld, x, y, direction, IID_PEACH_FIRE) {
         cerr << "new peach fireball made!" << endl;
     }
-    void doSomething();
 };
+
+//shell class for koopa shells
+class Shell : public FriendlyProjectile {
+public:
+    Shell(StudentWorld* studentWorld, int x, int y, int direction) : FriendlyProjectile(studentWorld, x, y, direction, IID_SHELL) {
+        cerr << "new shell made!" << endl;
+    }
+};
+
+// fireball class for piranha fireballs
 class PiranhaFireball : public Projectile {
 public:
     PiranhaFireball(StudentWorld* studentWorld, int x, int y, int direction) : Projectile(studentWorld, x, y, direction, IID_PIRANHA_FIRE) {
         cerr << "new piranha fireball made!" << endl;
     }
-    void bonk() {
-        
-    }
-    void doSomething() {
-        
-    }
-};
-class Shell : public Projectile {
-public:
-    Shell(StudentWorld* studentWorld, int x, int y, int direction) : Projectile(studentWorld, x, y, direction, IID_SHELL) {
-        cerr << "new shell made!" << endl;
-    }
-    void bonk() {
-        
-    }
-    void doSomething() {
-        
-    }
+    void collision();
 };
 
+// base class for all goodies/powerups
 class Goodie : public Actor {
 public:
     Goodie(StudentWorld* studentWorld, int x, int y, int direction, int IID) : Actor(studentWorld, x, y, IID, direction, 1, 1) {
@@ -232,33 +259,28 @@ public:
     void doSomething();
     virtual void customBuffs() = 0;
 };
+
+// fire flower class
 class Flower : public Goodie {
 public:
     Flower(StudentWorld* studentWorld, int x, int y, int direction) : Goodie(studentWorld, x, y, direction, IID_FLOWER) {
-        cerr << "new flower made!" << endl;
     }
-//    void bonk() {
-//        cerr << "flower bonked" << endl;
-//    }
     void customBuffs();
 };
+
+// mushroom class
 class Mushroom : public Goodie {
 public:
     Mushroom(StudentWorld* studentWorld, int x, int y, int direction) : Goodie(studentWorld, x, y, direction, IID_MUSHROOM) {
-        cerr << "new mushroom made!" << endl;
-    }
-    void bonk() {
-        cerr << "mushroom bonked" << endl;
     }
     void customBuffs();
 };
+
+//star class
 class Star : public Goodie {
 public:
     Star(StudentWorld* studentWorld, int x, int y, int direction) : Goodie(studentWorld, x, y, direction, IID_STAR) {
         cerr << "new star made!" << endl;
-    }
-    void bonk() {
-        cerr << "star bonked" << endl;
     }
     void customBuffs();
 };

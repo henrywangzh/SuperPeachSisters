@@ -26,6 +26,9 @@ public:
     void giveMushroomBuff();
     void giveInvincibility(int frames);
     void setPeachHP(int hp);
+    bool getPeachIsInvincible() const;
+    int getPeachX();
+    int getPeachY();
 
 private:
     std::list<Actor*> m_actors;
