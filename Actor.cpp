@@ -131,7 +131,7 @@ void Block::bonk() {
     m_hasBeenBonked = true;
 }
 
-//base doSomething for collider objects (essentially for the pipe)
+//base doSomething for collider objects
 void Collider::doSomething() {
     
 }

@@ -12,12 +12,12 @@
 class StudentWorld : public GameWorld
 {
 public:
-  StudentWorld(std::string assetPath);
-  virtual int init();
-  virtual int move();
-  virtual void cleanUp();
+    StudentWorld(std::string assetPath);
+    int init();
+    int move();
+    void cleanUp();
     ~StudentWorld();
-  bool coordIsBlocked(int x, int y, bool canBonk, bool canDamage,Actor* caller);
+    bool coordIsBlocked(int x, int y, bool canBonk, bool canDamage, Actor* caller);
     void addActor(Actor* newActor);
     bool overlappingPeach(int x, int y, bool canBonk);
     void setLevelFinished();
@@ -29,7 +29,7 @@ public:
     bool getPeachIsInvincible() const;
     int getPeachX();
     int getPeachY();
-
+    
 private:
     std::list<Actor*> m_actors;
     Peach* m_peach;
